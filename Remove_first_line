@@ -1,0 +1,25 @@
+How can I remove the first line of a text file using bash/sed script?
+
+sed -i -e "1d" $FILE - slow process
+
+tail -n +2 "$FILE"
+-n x: Just print the last x lines. tail -n 5 would give you the last 5 lines of the input. The + sign kind of inverts the argument and make tail print anything but the first x-1 lines. tail -n +1 would print the whole file, tail -n +2 everything but the first line, etc.
+
+GNU tail is much faster than sed. tail is also available on BSD and the -n +2 flag is consistent across both tools. Check the FreeBSD or OS X man pages for more.
+
+The BSD version can be much slower than sed, though. I wonder how they managed that; tail should just read a file line by line while sed does pretty complex operations involving interpreting a script, applying regular expressions and the like.
+
+Note: You may be tempted to use
+
+# THIS WILL GIVE YOU AN EMPTY FILE!
+tail -n +2 "$FILE" > "$FILE"
+but this will give you an empty file. The reason is that the redirection (>) happens before tail is invoked by the shell:
+
+Shell truncates file $FILE
+Shell creates a new process for tail
+Shell redirects stdout of the tail process to $FILE
+tail reads from the now empty $FILE
+If you want to remove the first line inside the file, you should use:
+
+tail -n +2 "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+The && will make sure that the file doesn't get overwritten when there is a problem.
